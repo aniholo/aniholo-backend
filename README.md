@@ -8,7 +8,7 @@ Make sure you've got [Python 3.6.5](http://www.python.org/downloads/release/pyth
 
 Install django, restframework and pyjwt: `pip install django djanogrestframework djangorestframework_simplejwt pyjwt`
 
-Run using `python tokenauthenticator/manage.py runserver`
+Run using `python aniholo/manage.py runserver`
 
 ## Contributing
 ￼	
