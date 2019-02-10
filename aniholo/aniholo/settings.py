@@ -11,6 +11,14 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 import os
+from configparser import RawConfigParser
+
+
+# Read the settings.ini file to collect all secret 
+# string values.
+config = RawConfigParser()
+config.read('settings.ini')
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -81,13 +89,27 @@ WSGI_APPLICATION = 'aniholo.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': 'user_info',
+#         'USER': 'actinc',
+#         'PASSWORD': 'hunter2',
+#         'HOST': '35.239.8.26',
+#         'PORT': '',
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': config.get('database_login', 'db_name'),
+        'USER': config.get('database_login', 'db_user'),
+        'PASSWORD': config.get('database_login', 'db_pass'),
+        'HOST': config.get('database_login', 'db_host'),
+        'PORT': config.get('database_login', 'db_port'),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators

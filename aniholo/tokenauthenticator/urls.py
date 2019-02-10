@@ -8,7 +8,9 @@ from . import views, serializers
 app_name = 'tokenauthenticator'
 
 urlpatterns = [
-    path('token/', serializers.MyTokenObtainView.as_view(), name='token_obtain_pair'),
-    path('token/refresh', serializers.MyTokenRefreshView.as_view(), name='token_refresh'),
-    path('test_access/', views.GetData.as_view()),
+    path('token/', views.login_request, name='token_obtain_pair'),
+    path('token/refresh/', views.refresh_request, name='token_refresh'),
+    path('register/', views.register, name='register_user'),
+    path('token/test/', views.test_token, name="test_token"),
+    path('posts/create', views.create_post, name="create_post"),
 ]
