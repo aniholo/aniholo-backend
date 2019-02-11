@@ -93,7 +93,7 @@ def login_request(request):
 		actual_access_token = u.decode("utf-8")
 		ts = float(time.time())
 
-		return Response({"status": "success", "refresh": actual_refresh_token, "access": actual_access_token})
+		return Response({"status": "success", "refresh": actual_refresh_token, "access": actual_access_token}, headers=headers)
 
 @csrf_exempt 
 @api_view(['GET', 'POST', ])
