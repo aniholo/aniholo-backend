@@ -38,7 +38,7 @@ def login_request(request):
 	#TODO - Set server-side limits to refresh times
 
 	if "user_id" not in request.POST or "password" not in request.POST:
-		return Response({"status": "failed - must include both username and password"})
+		return Response({"status": "failed", "error": "must include both username and password"})
 	
 	user_id = request.POST.get("user_id")  # the id is used to log in, not the name (it's changeable)
 	password = request.POST.get("password")
@@ -49,10 +49,10 @@ def login_request(request):
 	try:
 		record = models.User.objects.get(user_id=user_id)
 	except models.User.DoesNotExist:
-		return Response({"status": "failed - incorrect login details"})
+		return Response({"status": "failed", "error": "incorrect login details"})
 	
 	if (not argon2.verify(password, record.password)):
-		return Response({"status": "failed - incorrect login details"})
+		return Response({"status": "failed", "error": "incorrect login details"})
 
 	current_time = int(time.time())  # adding issual_time and expiration_time
 
@@ -61,7 +61,7 @@ def login_request(request):
 	try:
 		record.save()
 	except:
-		return Response({"status": "failed - internal server error"})
+		return Response({"status": "failed", "error": "internal server error"})
 
 	secret_key = settings.SECRET_KEY  #get server's secret key from settings.py
 	json_user_id = record.user_id
@@ -87,7 +87,7 @@ def login_request(request):
 @api_view(['POST'])
 def refresh_request(request):  # refresh an access token via the refresh_token
 	if "user_id" not in request.POST or "refresh_token" not in request.POST:
-		return Response({"status": "failed - must include user id and refresh token"})
+		return Response({"status": "failed", "error": "must include user id and refresh token"})
 	
 	user_id = request.POST.get('user_id')
 	refresh_token = request.POST.get('refresh_token')
@@ -95,14 +95,14 @@ def refresh_request(request):  # refresh an access token via the refresh_token
 	secret_key = settings.SECRET_KEY
 
 	if not isValidToken(refresh_token):
-		return Response({"access": "failed"})
+		return Response({"status": "failed", "error": "invalid token"})
 
 	payload = jwt.decode(refresh_token, secret_key)
 	
 	token_user_id = payload.get('user_id')
 
 	if user_id != token_user_id:
-		return Response({"status": "failed - user ids don't match"})
+		return Response({"status": "failed", "error": "user ids don't match"})
 
 	access_expiration_time = int(request.POST.get('access_duration', EXPIRATION_TIME))  # default value
 
@@ -122,16 +122,16 @@ def refresh_request(request):  # refresh an access token via the refresh_token
 @api_view(['POST'])
 def register(request):
 	if "user_id" not in request.POST or "email" not in request.POST or "password" not in request.POST:
-		return Response({"status": "failed - must include user id, email and password"})
+		return Response({"status": "failed", "error": "must include user id, email and password"})
 
 	user_event = models.User(user_id=request.POST.get("user_id"), email=request.POST.get("email"),
 							 password=argon2.using(rounds=10).hash(request.POST.get("password")),
 							 username=request.POST.get("username", None), date_joined=time.time())
 	
-	#try:
-	user_event.save(force_insert=True)
-	return Response({'status': 'success'})
-	#except IntegrityError:
-	#	return Response({"status": "failed - user already exists"})
-	#except:
-	#	return Response({"status": "failed - internal server error"})
+	try:
+		user_event.save(force_insert=True)
+		return Response({'status': 'success'})
+	except IntegrityError:
+		return Response({"status": "failed", "error": "user already exists"})
+	except:
+		return Response({"status": "failed", "error": "internal server error"})
