@@ -89,17 +89,6 @@ WSGI_APPLICATION = 'aniholo.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': 'user_info',
-#         'USER': 'actinc',
-#         'PASSWORD': 'hunter2',
-#         'HOST': '35.239.8.26',
-#         'PORT': '',
-#     }
-# }
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
