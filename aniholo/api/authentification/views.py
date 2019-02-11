@@ -126,12 +126,12 @@ def register(request):
 
 	user_event = models.User(user_id=request.POST.get("user_id"), email=request.POST.get("email"),
 							 password=argon2.using(rounds=10).hash(request.POST.get("password")),
-							 username=request.POST.get("username", ""), date_joined=time.time())
+							 username=request.POST.get("username", None), date_joined=time.time())
 	
-	try:
-		user_event.save(force_insert=True)
-		return Response({'status': 'success'})
-	except IntegrityError:
-		return Response({"status": "failed - user already exists"})
-	except:
-		return Response({"status": "failed - internal server error"})
+	#try:
+	user_event.save(force_insert=True)
+	return Response({'status': 'success'})
+	#except IntegrityError:
+	#	return Response({"status": "failed - user already exists"})
+	#except:
+	#	return Response({"status": "failed - internal server error"})
