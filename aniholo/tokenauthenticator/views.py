@@ -93,6 +93,7 @@ def login_request(request):
 		actual_access_token = u.decode("utf-8")
 		ts = float(time.time())
 
+		headers = {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept"}
 		return Response({"status": "success", "refresh": actual_refresh_token, "access": actual_access_token}, headers=headers)
 
 @csrf_exempt 
