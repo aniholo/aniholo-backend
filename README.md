@@ -10,7 +10,7 @@ Install django, restframework and pyjwt: `pip install django djangorestframework
 
 Run using `python aniholo/manage.py runserver`
 
-To connect to the official server, you'll need a different *settings.ini*
+To connect to the official server, you'll need a different `settings.ini`
 
 ## Contributing
 ￼	
