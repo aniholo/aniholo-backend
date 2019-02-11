@@ -12,6 +12,7 @@ import jwt
 
 from datetime import datetime
 import time
+import ast
 
 def isValidToken(token):
 	secret_key = settings.SECRET_KEY
@@ -93,6 +94,7 @@ def login_request(request):
 		actual_access_token = u.decode("utf-8")
 		ts = float(time.time())
 
+		headers = {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept"}
 		return Response({"status": "success", "refresh": actual_refresh_token, "access": actual_access_token}, headers=headers)
 
 @csrf_exempt 
@@ -148,20 +150,68 @@ def create_post(request):
 
 		username = payload.get("username")
 		title = request.POST.get("title")
-		image_link = request.POST.get("link")
+
+		image_link = ""
+		if ("link" in request.POST):
+			image_link = request.POST.get("link")
+
 		date_posted = datetime.today()
 		current_upvotes = "0"
 		current_downvotes = "0"
 
+		is_nsfw = False
+		if ("is_nsfw" in request.POST):
+			is_nsfw = bool(request.POST.get('is_nsfw'))
+
+		is_spoiler = False
+		if ("is_spoiler" in request.POST):
+			is_spoiler = bool(request.POST.get('is_spoiler'))
+
+		is_announcement = False
+		if ("is_announcement" in request.POST):
+			is_announcement = bool(request.POST.get('is_announcement'))
+
+		required_tag = "Discussion"
+		if ("required_tag" in request.POST):
+			required_tag = bool(request.POST.get('required_tag'))
+		else:
+			return Response({"status: failed - must a required tag"})
+
+		other_tags = ""
+		if ("tags" in request.POST):
+			other_tags = str(request.POST.get('tags'))
+		other_tags_array = ast.litera_val(other_tags)
+
+		source_material = ""
+		if ("source_material" in request.POST):
+			source_material = bool(request.POST.get('source_material'))
+
+		post_text = ""
+		if ("post_text" in request.POST):
+			post_text = bool(request.POST.get('post_text'))
+
+		post_type = ""
+		if ("post_type" in request.POST):
+			post_type = bool(request.POST.get('post_type'))
+
 		post = models.Posts(author=username, title=title,
 						   upvotes=current_upvotes, downvotes=current_downvotes,
-						   date_posted=date_posted, image_link=image_link)
+						   date_posted=date_posted, image_link=image_link, is_nsfw=is_nsfw,
+						   is_spoiler=is_spoiler, is_announcement=is_announcement,
+						   required_tag=required_tag,
+						   source_material=source_material,
+						   post_text=post_text, post_type=post_type)
 
 		content = {'status': 'success'}
 		
-		#try:
-		post.save()
-		#except:
-		#	content = {'status': 'failed'}
+		try:
+			# for tag in other_tags_array:
+				# if (len(models.Tags.objects.filter(tag_name=tag.lower()) == 0)):
+					# tag = models.Tags(tag_name=tag.lower())
+					
+
+			post.save()
+		except:
+			content = {'status': 'failed'}
 
 		return Response(content)
