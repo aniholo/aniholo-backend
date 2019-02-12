@@ -43,12 +43,11 @@ def create_post(request):
 	title = request.POST.get("title")
 	content = request.POST.get("content")
 	content_type = int(request.POST.get("content_type"))
-	is_nsfw = bool(request.POST.get("nsfw", False))
 	tags = str(request.POST.get("tags", "")).split(",")
 	date_posted = time.time()
 
 	post = models.Post(author=user_id, title=title,
-						date_posted=date_posted, content=content, is_nsfw=is_nsfw,
+						date_posted=date_posted, content=content,
 						content_type=content_type)
 
 	try:
