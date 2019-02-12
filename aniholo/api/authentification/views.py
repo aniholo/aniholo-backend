@@ -47,7 +47,6 @@ def login_request(request):
 	except:
 		return Response({"status": "failed", "error": "internal server error"})
 
-	secret_key = settings.SECRET_KEY  # get server's secret key from settings.py
 	json_user_id = record.user_id
 
 	refresh_token_content = {
@@ -77,12 +76,10 @@ def refresh_request(request):  # refresh an access token via the refresh_token
 	user_id = request.POST.get('user_id')
 	refresh_token = request.POST.get('refresh_token')
 
-	secret_key = settings.SECRET_KEY
-
-	if not validator.isValidToken(refresh_token):
+	if not token.isValidToken(refresh_token):
 		return Response({"status": "failed", "error": "invalid token"})
 
-	payload = jwt.decode(refresh_token, secret_key)
+	payload = token.decode(refresh_token)
 	
 	token_user_id = payload.get('user_id')
 
