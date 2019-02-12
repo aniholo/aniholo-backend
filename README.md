@@ -13,5 +13,4 @@ Run using `python aniholo/manage.py runserver`
 To connect to the official server, you'll need a different `settings.ini`
 
 ## Contributing
-￼	
 Everyone is welcome to contribute to AniHolo! After making changes to your own fork, feel free to open up a pull request. Make sure to double check your changes: only pull requests up to standard will be accepted.
