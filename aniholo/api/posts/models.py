@@ -10,7 +10,6 @@ class Post(models.Model):
     content_type = models.SmallIntegerField(null=False)
     score = models.IntegerField(null=False, default=0)
     date_posted = models.IntegerField(null=False)
-    is_nsfw = models.BooleanField(null=False)
 
     class Meta:
         managed = False
