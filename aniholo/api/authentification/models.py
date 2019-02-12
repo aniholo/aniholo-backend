@@ -9,6 +9,7 @@ class User(models.Model):
 	email = models.TextField(null=False)
 	date_joined = models.IntegerField()
 	last_login = models.IntegerField()
+	secret = models.CharField(max_length=32, null=False)
 
 	class Meta:
 		app_label = 'user_data'
