@@ -18,7 +18,7 @@ class Post(models.Model):
 
 class PostTag(models.Model):
     tag_id = models.AutoField(primary_key=True)
-    tag_value = models.TextField(null=False)
+    tag_value = models.TextField(null=False, unique=True)
 
     class Meta:
         managed = False
