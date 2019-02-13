@@ -40,8 +40,8 @@ class Votes(models.Model):
     user_id = models.CharField(max_length=50)
     vote_type = models.TextField(null=False)
     vote_value = models.IntegerField(null=False)
-    vote_id = models.CharField(primary_key=True)
-    object_id = models.CharField(null=False)
+    vote_id = models.AutoField(primary_key=True)
+    object_id = models.CharField(null=False, max_length=50)
 
     class Meta:
         managed = False
