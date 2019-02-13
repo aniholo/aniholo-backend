@@ -36,7 +36,7 @@ class PostTagPivot(models.Model):
         db_table = 'post_tag_pivot'
         app_label = 'post_tag_pivot_connector'
 
-class Comment_temp(MPTTModel):
+class Comment(MPTTModel):
     author = models.CharField(null=False, max_length=50)
     post_id = models.IntegerField(null=False)
     date_posted = models.IntegerField(null=False)
@@ -47,4 +47,4 @@ class Comment_temp(MPTTModel):
     parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children', db_index=True)
 
     class MPTTMeta:
-        order_insertion_by = ['-score']
+        order_insertion_by = ['-score']d
