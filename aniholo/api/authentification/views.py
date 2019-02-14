@@ -11,6 +11,7 @@ from passlib.hash import argon2
 
 import secrets
 import time
+import datetime
 import ast
 
 EXPIRATION_TIME = 600  # 10 mins
@@ -109,11 +110,13 @@ def register(request):
 	user_event = models.User(user_id=request.POST.get("user_id"), email=request.POST.get("email"),
 							 password=argon2.using(rounds=10).hash(request.POST.get("password")),
 							 username=request.POST.get("username", None), date_joined=time.time(),
+                             last_login=datetime.datetime.now(),
+                             user_ipv4='127.0.0.1',# TODO where are we getting it from?
 							 secret=secrets.token_hex(16))
 	
 	try:
-		user_event.save(force_insert=True)
-		return Response({'status': 'success'})
+	    user_event.save(force_insert=True)
+	    return Response({'status': 'success'})
 	except IntegrityError:
 		return Response({"status": "failed", "error": "user already exists"})
 	except:
