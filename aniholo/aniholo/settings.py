@@ -140,5 +140,3 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 CORS_ORIGIN_WHITELIST = 'localhost:8080',
-
-AUTH_USER_MODEL = 'api.authentification.User'
