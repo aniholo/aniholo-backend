@@ -6,7 +6,7 @@ Backend for AniHolo
 
 Make sure you've got [Python 3.6.5](http://www.python.org/downloads/release/python-365/) installed (and the `pip` package manager, which should be included by default in Python 3 versions > 3.4).
 
-Install django, restframework and pyjwt: `pip install django djangorestframework djangorestframework_simplejwt pyjwt psycopg2 passlib argon2-cffi django-cors-headers`
+Install django, restframework and pyjwt: `pip install django djangorestframework djangorestframework_simplejwt pyjwt psycopg2 passlib argon2-cffi django-cors-headers django-mptt`
 
 Run using `python aniholo/manage.py runserver`
 

@@ -10,8 +10,9 @@ class User(models.Model):
 	date_joined = models.IntegerField()
 	last_login = models.IntegerField()
 	secret = models.CharField(max_length=32, null=False)
+	user_ip_address = models.CharField(max_length=15, blank=True, null=True)
 
 	class Meta:
-		app_label = 'user_data'
+		app_label = 'authentification'
 		managed = False
 		db_table = 'users'

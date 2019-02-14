@@ -1,4 +1,6 @@
 from django.db import models
+from mptt.models import MPTTModel, TreeForeignKey
+
 
 # Create your models here.
 
@@ -33,3 +35,27 @@ class PostTagPivot(models.Model):
         managed = False
         db_table = 'post_tag_pivot'
         app_label = 'post_tag_pivot_connector'
+
+class Votes(models.Model):
+    user_id = models.CharField(max_length=50)
+    vote_type = models.TextField(null=False)
+    vote_value = models.IntegerField(null=False)
+    vote_id = models.AutoField(primary_key=True)
+    object_id = models.CharField(null=False, max_length=50)
+
+    class Meta:
+        managed = False
+        db_table = 'votes'
+
+class Comment(MPTTModel):
+    author = models.CharField(null=False, max_length=50)
+    post_id = models.IntegerField(null=False)
+    date_posted = models.IntegerField(null=False)
+    upvotes = models.IntegerField(default=0)
+    downvotes = models.IntegerField(default=0)
+    score = models.IntegerField(default=0)
+    raw_content = models.TextField(null=False)
+    parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children', db_index=True)
+
+    class MPTTMeta:
+        order_insertion_by = ['-score']
