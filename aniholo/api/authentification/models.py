@@ -12,6 +12,7 @@ class User(models.Model):
 	secret = models.CharField(max_length=32, null=False)
 	user_ip_address = models.CharField(max_length=15, blank=True, null=True)
 	user_perms = models.CharField(max_length=9, default="user")
+	accepted_tos = models.BooleanField(blank=True, null=True)
 
 	class Meta:
 		app_label = 'authentification'
