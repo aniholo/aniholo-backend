@@ -11,6 +11,7 @@ class User(models.Model):
 	last_login = models.IntegerField()
 	secret = models.CharField(max_length=32, null=False)
 	user_ip_address = models.CharField(max_length=15, blank=True, null=True)
+	user_perms = models.CharField(max_length=9, default="user")
 
 	class Meta:
 		app_label = 'authentification'
