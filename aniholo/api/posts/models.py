@@ -18,13 +18,14 @@ class Post(models.Model):
     class Meta:
         db_table = 'posts'
 
+
 class Tag(models.Model):
-    tag_id = models.AutoField(primary_key=True)
+    post = models.ManyToManyField(Post)
     tag_value = models.CharField(max_length=32)
-    post = models.ForeignKey('Post', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'tags'
+
 
 class Comment(MPTTModel):
     comment_id = models.AutoField(primary_key=True)
@@ -41,6 +42,7 @@ class Comment(MPTTModel):
     
     class Meta:
         db_table = 'comments'
+
 
 class Vote(models.Model):
     vote_id = models.AutoField(primary_key=True)
