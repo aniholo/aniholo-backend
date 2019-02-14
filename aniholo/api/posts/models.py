@@ -1,35 +1,53 @@
 from django.db import models
+from mptt.models import MPTTModel, TreeForeignKey
+
 
 # Create your models here.
 
 class Post(models.Model):
     post_id = models.AutoField(primary_key=True)
-    author = models.CharField(max_length=50, null=False)
-    title = models.TextField(null=False)
-    content = models.TextField(null=False)
-    content_type = models.SmallIntegerField(null=False)
-    score = models.IntegerField(null=False, default=0)
-    date_posted = models.IntegerField(null=False)
+    raw_content = models.TextField()
+    content_type = models.PositiveSmallIntegerField()
+    title = models.CharField(max_length=100)
+    author = models.ForeignKey('authentification.User', on_delete=models.CASCADE)
+    comments = models.IntegerField(default=0)
+    author_name = models.CharField(max_length=16)
+    date_posted = models.DateTimeField(auto_now_add=True)
+    score = models.IntegerField(default=0)
 
     class Meta:
-        managed = False
         db_table = 'posts'
-        app_label = 'post_data'
 
-class PostTag(models.Model):
+class Tag(models.Model):
     tag_id = models.AutoField(primary_key=True)
-    tag_value = models.TextField(null=False)
+    tag_value = models.CharField(max_length=32)
+    post = models.ForeignKey('Post', on_delete=models.CASCADE)
 
     class Meta:
-        managed = False
         db_table = 'tags'
-        app_label = 'tag_values'
 
-class PostTagPivot(models.Model):
-    post_id = models.IntegerField(primary_key=True)
-    tag_id = models.IntegerField(null=False)
+class Comment(MPTTModel):
+    comment_id = models.AutoField(primary_key=True)
+    author = models.ForeignKey('authentification.User', on_delete=models.CASCADE)
+    author_name = models.CharField(max_length=16)
+    post = models.ForeignKey('Post', on_delete=models.CASCADE)
+    score = models.IntegerField(default=0)
+    raw_content = models.TextField()
+    parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children', db_index=True)
+    date_posted = models.DateTimeField(auto_now_add=True)
+
+    class MPTTMeta:
+        order_by_insertion = ['-score']
+    
+    class Meta:
+        db_table = 'comments'
+
+class Vote(models.Model):
+    vote_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey('authentification.User', on_delete=models.CASCADE)
+    vote_type = models.PositiveSmallIntegerField()
+    vote_value = models.SmallIntegerField()
+    object_id = models.IntegerField()
 
     class Meta:
-        managed = False
-        db_table = 'post_tag_pivot'
-        app_label = 'post_tag_pivot_connector'
+        db_table = 'votes'

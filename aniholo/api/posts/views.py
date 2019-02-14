@@ -6,26 +6,10 @@ from rest_framework.decorators import api_view
 
 from . import models
 from aniholo import settings
-
-import jwt
+from api.authentification import token
 
 import time
 import ast
-
-def isValidToken(token):
-	secret_key = settings.SECRET_KEY
-
-	payload = None
-
-	try:
-		payload = jwt.decode(token, secret_key)
-	except (Exception):
-		return False
-
-	if ("expire_time" in payload):
-		received_expire_time = payload.get("expire_time")
-		return int(time.time()) < received_expire_time
-	return True
 
 @csrf_exempt 
 @api_view(['POST'])
@@ -33,11 +17,10 @@ def create_post(request):
 	if "token" not in request.POST or "title" not in request.POST or "content" not in request.POST or "content_type" not in request.POST:
 		return Response({"status": "failed", "error": "must include token, title, content and content type"})
 
-	if not isValidToken(request.POST.get("token")):
+	if not token.isValidToken(request.POST.get("token")):
 		return Response({"status": "failed", "error": "invalid token"})
 
-	secret_key = settings.SECRET_KEY
-	payload = jwt.decode(request.POST.get("token"), secret_key)
+	payload = token.decode(request.POST.get("token"))
 
 	user_id = payload.get("user_id")
 	title = request.POST.get("title")
