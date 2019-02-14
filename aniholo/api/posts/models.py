@@ -18,13 +18,20 @@ class Post(models.Model):
     class Meta:
         db_table = 'posts'
 
-class Tag(models.Model):
+class PostTag(models.Model):
     tag_id = models.AutoField(primary_key=True)
-    tag_value = models.CharField(max_length=32)
-    post = models.ForeignKey('Post', on_delete=models.CASCADE)
+    tag_value = models.TextField(null=False, unique=True)
 
     class Meta:
         db_table = 'tags'
+
+class PostTagPivot(models.Model):
+    post_id = models.IntegerField(primary_key=True)
+    tag_id = models.IntegerField(null=False)
+
+    class Meta:
+        db_table = 'post_tag_pivot'
+    
 
 class Comment(MPTTModel):
     comment_id = models.AutoField(primary_key=True)
