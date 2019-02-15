@@ -18,20 +18,13 @@ class Post(models.Model):
     class Meta:
         db_table = 'posts'
 
-class PostTag(models.Model):
-    tag_id = models.AutoField(primary_key=True)
-    tag_value = models.CharField(max_length=32, unique=True)
+class Tag(models.Model):
+    post = models.ManyToManyField(Post)
+    tag_value = models.CharField(max_length=32)
 
     class Meta:
         db_table = 'tags'
 
-class PostTagPivot(models.Model):
-    post_id = models.IntegerField(primary_key=True)
-    tag_id = models.IntegerField()
-
-    class Meta:
-        db_table = 'post_tag_pivot'
-    
 class Comment(MPTTModel):
     comment_id = models.AutoField(primary_key=True)
     author = models.ForeignKey('authentification.User', on_delete=models.CASCADE)
@@ -47,6 +40,7 @@ class Comment(MPTTModel):
     
     class Meta:
         db_table = 'comments'
+
 
 class Vote(models.Model):
     vote_id = models.AutoField(primary_key=True)
