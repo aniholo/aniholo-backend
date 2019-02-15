@@ -36,8 +36,8 @@ def create_post(request):
 		post.save(force_insert=True)
 
 		for tag in tags:
-			tag, _ = models.PostTag.objects.get_or_create(tag_value=tag)
-			models.PostTagPivot.objects.create(post_id=post.post_id, tag_id=tag.tag_id)
+			tag, _ = models.Tag.objects.get_or_create(tag_value=tag)
+			tag.post.add(post)
 
 		return Response({'status': 'success'})
 	except:

@@ -11,6 +11,7 @@ from passlib.hash import argon2
 
 import secrets
 import time
+import datetime
 import ast
 
 from django.utils import timezone
@@ -113,8 +114,8 @@ def register(request):
 							 secret=secrets.token_hex(16))
 	
 	try:
-		user_event.save(force_insert=True)
-		return Response({'status': 'success'})
+	    user_event.save(force_insert=True)
+	    return Response({'status': 'success'})
 	except IntegrityError:
 		return Response({"status": "failed", "error": "user already exists"})
 	except:
