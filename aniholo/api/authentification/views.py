@@ -95,6 +95,7 @@ def refresh_request(request):  # refresh an access token via the refresh_token
 	access_token_content = {
 		"user_id": token_user_id,
 		"issual_time": current_time,
+		"user_secret": payload.get('user_secret'),
 		"expiration_time" : current_time + access_expiration_time
 	}
 	access_token = token.encode(access_token_content)
