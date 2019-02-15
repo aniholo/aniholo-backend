@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt
 from django.db.utils import IntegrityError
 from rest_framework.decorators import api_view
+from api.authentification.models import User
 
 from . import models
 from aniholo import settings
@@ -24,13 +25,13 @@ def create_post(request):
 
 	user_id = payload.get("user_id")
 	title = request.POST.get("title")
-	content = request.POST.get("content")
+	raw_content = request.POST.get("content")
 	content_type = int(request.POST.get("content_type"))
 	tags = str(request.POST.get("tags", "")).split(",")
 	date_posted = time.time()
 
-	post = models.Post(author=user_id, title=title,
-						date_posted=date_posted, content=content,
+	post = models.Post(author=User.object.get(user_id=user_id), author_name=user_id, title=title,
+						date_posted=date_posted, raw_content=raw_content,
 						content_type=content_type)
 
 	try:

@@ -13,6 +13,9 @@ import secrets
 import time
 import ast
 
+from django.utils import timezone
+
+
 EXPIRATION_TIME = 600  # 10 mins
 REFRESH_EXPIRATION_TIME = 86400  # 1 day
 
@@ -108,8 +111,8 @@ def register(request):
 
 	user_event = models.User(user_id=request.POST.get("user_id"), email=request.POST.get("email"),
 							 password=argon2.using(rounds=10).hash(request.POST.get("password")),
-							 username=request.POST.get("username", None), date_joined=time.time(),
-							 secret=secrets.token_hex(16))
+							 username=request.POST.get("username", None), user_ipv4=request.META.get('HTTP_X_FORWARDED_FOR').split(',')[0] if request.META.get('HTTP_X_FORWARDED_FOR') else request.META.get('REMOTE_ADDR'),
+							 secret=secrets.token_hex(16), last_login=timezone.now())
 	
 	try:
 		user_event.save(force_insert=True)
