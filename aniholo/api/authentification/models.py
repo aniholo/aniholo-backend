@@ -3,15 +3,15 @@ from django.db import models
 # Create your models here.
 
 class User(models.Model):
-	user_id = models.CharField(primary_key=True, max_length=50)
-	username = models.CharField(unique=True, max_length=50)
-	password = models.CharField(max_length=100, null=False)
-	email = models.TextField(null=False)
-	date_joined = models.IntegerField()
-	last_login = models.IntegerField()
-	secret = models.CharField(max_length=32, null=False)
+	user_id = models.CharField(primary_key=True, max_length=16)
+	username = models.CharField(max_length=16, unique=True)
+	password = models.CharField(max_length=100)
+	email = models.EmailField(max_length=254)
+	date_joined = models.DateField(auto_now_add=True)
+	last_login = models.DateTimeField(auto_now=True)
+	secret = models.CharField(max_length=32)
+	user_ipv4 = models.GenericIPAddressField(protocol='IPv4')
+	user_perms = models.TextField(default="user")
 
 	class Meta:
-		app_label = 'user_data'
-		managed = False
 		db_table = 'users'

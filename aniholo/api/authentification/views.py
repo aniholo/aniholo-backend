@@ -11,7 +11,11 @@ from passlib.hash import argon2
 
 import secrets
 import time
+import datetime
 import ast
+
+from django.utils import timezone
+
 
 EXPIRATION_TIME = 600  # 10 mins
 REFRESH_EXPIRATION_TIME = 86400  # 1 day
@@ -39,8 +43,6 @@ def login_request(request):
 		return Response({"status": "failed", "error": "incorrect login details"})
 
 	current_time = int(time.time())  # adding issual_time and expiration_time
-
-	record.last_login = current_time
 
 	try:
 		record.save()
@@ -108,12 +110,12 @@ def register(request):
 
 	user_event = models.User(user_id=request.POST.get("user_id"), email=request.POST.get("email"),
 							 password=argon2.using(rounds=10).hash(request.POST.get("password")),
-							 username=request.POST.get("username", None), date_joined=time.time(),
+							 username=request.POST.get("username", None), user_ipv4=request.META.get('HTTP_X_FORWARDED_FOR').split(',')[0] if request.META.get('HTTP_X_FORWARDED_FOR') else request.META.get('REMOTE_ADDR'),
 							 secret=secrets.token_hex(16))
 	
 	try:
-		user_event.save(force_insert=True)
-		return Response({'status': 'success'})
+	    user_event.save(force_insert=True)
+	    return Response({'status': 'success'})
 	except IntegrityError:
 		return Response({"status": "failed", "error": "user already exists"})
 	except:
