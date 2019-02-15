@@ -28,11 +28,9 @@ def create_post(request):
 	raw_content = request.POST.get("content")
 	content_type = int(request.POST.get("content_type"))
 	tags = str(request.POST.get("tags", "")).split(",")
-	date_posted = time.time()
 
-	post = models.Post(author=User.object.get(user_id=user_id), author_name=user_id, title=title,
-						date_posted=date_posted, raw_content=raw_content,
-						content_type=content_type)
+	post = models.Post(author=User.objects.get(user_id=user_id), author_name=user_id, title=title,
+						raw_content=raw_content, content_type=content_type)
 
 	try:
 		post.save(force_insert=True)
