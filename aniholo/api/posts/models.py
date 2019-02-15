@@ -20,7 +20,7 @@ class Post(models.Model):
 
 class Tag(models.Model):
     post = models.ManyToManyField(Post)
-    tag_value = models.CharField(max_length=32)
+    tag_value = models.CharField(max_length=32, unique=True)
 
     class Meta:
         db_table = 'tags'
