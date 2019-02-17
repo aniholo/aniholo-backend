@@ -11,7 +11,6 @@ class Post(models.Model):
     title = models.CharField(max_length=100)
     author = models.ForeignKey('authentication.User', on_delete=models.CASCADE)
     comments = models.IntegerField(default=0)
-    author_name = models.CharField(max_length=16)
     date_posted = models.DateTimeField(auto_now_add=True)
     score = models.IntegerField(default=0)
 
@@ -28,7 +27,6 @@ class Tag(models.Model):
 class Comment(MPTTModel):
     comment_id = models.AutoField(primary_key=True)
     author = models.ForeignKey('authentication.User', on_delete=models.CASCADE)
-    author_name = models.CharField(max_length=16)
     post = models.ForeignKey('Post', on_delete=models.CASCADE)
     score = models.IntegerField(default=0)
     raw_content = models.TextField()
