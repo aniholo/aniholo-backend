@@ -18,13 +18,13 @@ from types import SimpleNamespace
 @csrf_exempt 
 @api_view(['POST'])
 def create_post(request):
-	if "token" not in request.POST or "title" not in request.POST or "content" not in request.POST or "content_type" not in request.POST:
+	if "access_token" not in request.POST or "title" not in request.POST or "content" not in request.POST or "content_type" not in request.POST:
 		return Response({"status": "failed", "error": "must include token, title, content and content type"})
 
-	if not token.isValidToken(request.POST.get("token")):
+	if not token.isValidToken(request.POST.get("access_token")):
 		return Response({"status": "failed", "error": "invalid token"})
 
-	payload = token.decode(request.POST.get("token"))
+	payload = token.decode(request.POST.get("access_token"))
 
 	try:
 		user_id = payload.get("user_id")
@@ -35,7 +35,7 @@ def create_post(request):
 	except:
 		return Response({"status": "failed", "error": "parameter error"})
 
-	post = models.Post(author=User.objects.get(user_id=user_id), author_name=user_id, title=title,
+	post = models.Post(author=User.objects.get(user_id=user_id), title=title,
 						raw_content=raw_content, content_type=content_type)
 
 	try:
@@ -52,13 +52,13 @@ def create_post(request):
 @csrf_exempt 
 @api_view(['POST'])
 def get_post(request):
-	if "token" not in request.POST or "id" not in request.POST:
+	if "access_token" not in request.POST or "id" not in request.POST:
 		return Response({"status": "failed", "error": "must include token and post id"})
 
-	if not token.isValidToken(request.POST.get("token")):
+	if not token.isValidToken(request.POST.get("access_token")):
 		return Response({"status": "failed", "error": "invalid token"})
 
-	payload = token.decode(request.POST.get("token"))
+	payload = token.decode(request.POST.get("access_token"))
 
 	user_id = payload.get("user_id")
 
@@ -88,13 +88,13 @@ def get_post(request):
 @csrf_exempt 
 @api_view(['POST'])
 def vote(request):
-	if "token" not in request.POST or "id" not in request.POST or "type" not in request.POST or "value" not in request.POST:
+	if "access_token" not in request.POST or "id" not in request.POST or "type" not in request.POST or "value" not in request.POST:
 		return Response({"status": "failed", "error": "must include token, object id, object type and vote value"})
 
-	if not token.isValidToken(request.POST.get("token")):
+	if not token.isValidToken(request.POST.get("access_token")):
 		return Response({"status": "failed", "error": "invalid token"})
 
-	payload = token.decode(request.POST.get("token"))
+	payload = token.decode(request.POST.get("access_token"))
 
 	user_id = payload.get("user_id")
 
@@ -128,13 +128,13 @@ def vote(request):
 @csrf_exempt 
 @api_view(['POST'])
 def list_posts(request):
-	if "token" not in request.POST:
-		return Response({"status": "failed", "error": "must include token and post id"})
+	if "access_token" not in request.POST:
+		return Response({"status": "failed", "error": "must include token"})
 
-	if not token.isValidToken(request.POST.get("token")):
+	if not token.isValidToken(request.POST.get("access_token")):
 		return Response({"status": "failed", "error": "invalid token"})
 
-	payload = token.decode(request.POST.get("token"))
+	payload = token.decode(request.POST.get("access_token"))
 	user_id = payload.get("user_id")
 
 	try:
@@ -161,9 +161,11 @@ def list_posts(request):
 			posts = posts.order_by("date_posted")
 		elif order == "top":
 			posts = posts.order_by("-score", "-date_posted")
+		elif tags[0]:
+			posts = posts.order_by("-count", "-date_posted")  # relevance when tags are specified
 		else:
-			posts = posts.order_by("-count", "-date_posted")
-			pass  # haven't found a way to do this yet, relevance should depend on a combination age and score as well (rn only on number of matched tags and age if equal)
+			posts = posts.order_by("-date_posted")  # normal relevance
+			# haven't found a way to do this yet, relevance should depend on a combination age and score as well (rn only on number of matched tags(^) and age if equal/only age)
 		
 		return Response({'status': 'success', 'posts': [{
 			'post_id': post.post_id,
