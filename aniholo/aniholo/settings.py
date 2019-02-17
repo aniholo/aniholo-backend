@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'mptt',
     'api.authentication',
     'api.posts',
+    'api.comments',
 ]
 
 MIDDLEWARE = [
