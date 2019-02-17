@@ -129,7 +129,7 @@ def vote(request):
 @api_view(['POST'])
 def list_posts(request):
 	if "access_token" not in request.POST:
-		return Response({"status": "failed", "error": "must include token and post id"})
+		return Response({"status": "failed", "error": "must include token"})
 
 	if not token.isValidToken(request.POST.get("access_token")):
 		return Response({"status": "failed", "error": "invalid token"})
