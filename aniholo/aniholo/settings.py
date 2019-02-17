@@ -52,7 +52,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'mptt',
-    'api.authentification',
+    'api.authentication',
     'api.posts',
 ]
 

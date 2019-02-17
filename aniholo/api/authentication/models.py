@@ -4,7 +4,8 @@ from django.db import models
 
 class User(models.Model):
 	user_id = models.CharField(primary_key=True, max_length=16)
-	username = models.CharField(max_length=16, unique=True)
+	# this has to allow null values because otherwise new users without a username can't be registered ("" == "" violates uniqueness)
+	username = models.CharField(max_length=16, unique=True, null=True)
 	password = models.CharField(max_length=100)
 	email = models.EmailField(max_length=254)
 	date_joined = models.DateField(auto_now_add=True)

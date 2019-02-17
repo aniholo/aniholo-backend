@@ -5,7 +5,7 @@ from django.conf.urls import url
 
 from . import views, serializers
 
-app_name = 'api.authentification'
+app_name = 'api.authentication'
 
 urlpatterns = [
     path('login', views.login_request, name='token_obtain'),

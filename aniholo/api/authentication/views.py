@@ -115,8 +115,8 @@ def register(request):
 							 secret=secrets.token_hex(16))
 	
 	try:
-	    user_event.save(force_insert=True)
-	    return Response({'status': 'success'})
+		user_event.save(force_insert=True)
+		return Response({'status': 'success'})
 	except IntegrityError:
 		return Response({"status": "failed", "error": "user already exists"})
 	except:
