@@ -35,7 +35,7 @@ def create_post(request):
 	except:
 		return Response({"status": "failed", "error": "parameter error"})
 
-	post = models.Post(author=User.objects.get(user_id=user_id), author_name=user_id, title=title,
+	post = models.Post(author=User.objects.get(user_id=user_id), title=title,
 						raw_content=raw_content, content_type=content_type)
 
 	try:
@@ -161,9 +161,11 @@ def list_posts(request):
 			posts = posts.order_by("date_posted")
 		elif order == "top":
 			posts = posts.order_by("-score", "-date_posted")
+		elif tags[0]:
+			posts = posts.order_by("-count", "-date_posted")  # relevance when tags are specified
 		else:
-			posts = posts.order_by("-count", "-date_posted")
-			pass  # haven't found a way to do this yet, relevance should depend on a combination age and score as well (rn only on number of matched tags and age if equal)
+			posts = posts.order_by("-date_posted")  # normal relevance
+			# haven't found a way to do this yet, relevance should depend on a combination age and score as well (rn only on number of matched tags(^) and age if equal/only age)
 		
 		return Response({'status': 'success', 'posts': [{
 			'post_id': post.post_id,
