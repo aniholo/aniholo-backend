@@ -1,4 +1,4 @@
-from api.authentification import models
+from api.authentication import models
 from aniholo import settings
 
 import jwt

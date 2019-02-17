@@ -9,28 +9,24 @@ class Post(models.Model):
     raw_content = models.TextField()
     content_type = models.PositiveSmallIntegerField()
     title = models.CharField(max_length=100)
-    author = models.ForeignKey('authentification.User', on_delete=models.CASCADE)
+    author = models.ForeignKey('authentication.User', on_delete=models.CASCADE)
     comments = models.IntegerField(default=0)
-    author_name = models.CharField(max_length=16)
     date_posted = models.DateTimeField(auto_now_add=True)
     score = models.IntegerField(default=0)
 
     class Meta:
         db_table = 'posts'
 
-
 class Tag(models.Model):
     post = models.ManyToManyField(Post)
-    tag_value = models.CharField(max_length=32)
+    tag_value = models.CharField(max_length=32, unique=True)
 
     class Meta:
         db_table = 'tags'
 
-
 class Comment(MPTTModel):
     comment_id = models.AutoField(primary_key=True)
-    author = models.ForeignKey('authentification.User', on_delete=models.CASCADE)
-    author_name = models.CharField(max_length=16)
+    author = models.ForeignKey('authentication.User', on_delete=models.CASCADE)
     post = models.ForeignKey('Post', on_delete=models.CASCADE)
     score = models.IntegerField(default=0)
     raw_content = models.TextField()
@@ -46,9 +42,9 @@ class Comment(MPTTModel):
 
 class Vote(models.Model):
     vote_id = models.AutoField(primary_key=True)
-    user = models.ForeignKey('authentification.User', on_delete=models.CASCADE)
+    user = models.ForeignKey('authentication.User', on_delete=models.CASCADE)
     vote_type = models.PositiveSmallIntegerField()
-    vote_value = models.SmallIntegerField()
+    vote_value = models.SmallIntegerField(default=0)
     object_id = models.IntegerField()
 
     class Meta:

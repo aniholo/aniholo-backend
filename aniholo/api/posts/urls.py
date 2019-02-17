@@ -8,5 +8,8 @@ from . import views, serializers
 app_name = 'api.posts'
 
 urlpatterns = [
-    path('create', views.create_post, name='post_create'),
+    path('create', views.create_post, name='post_create'),  # create a post
+    path('list', views.list_posts, name='post_list'),  # list posts for specific params
+    path('get', views.get_post, name='post_get'),  # get data of a single post
+    path('vote', views.vote, name='object_vote'),  # vote on an object
 ]
