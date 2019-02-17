@@ -35,7 +35,7 @@ def create_post(request):
 	except:
 		return Response({"status": "failed", "error": "parameter error"})
 
-	post = models.Post(author=User.objects.get(user_id=user_id), author_name=user_id, title=title,
+	post = models.Post(author=User.objects.get(user_id=user_id), title=title,
 						raw_content=raw_content, content_type=content_type)
 
 	try:
