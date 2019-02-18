@@ -33,13 +33,45 @@ def create_comment(request):
     else:
         parent = None
 
-    post = Comment(author=User.objects.get(user_id=user_id),
+    comment = Comment(author=User.objects.get(user_id=user_id),
                    post=Post.objects.get(post_id=post_id),
                    parent=parent,
                    raw_content=raw_content)
 
     try:
-        post.save(force_insert=True)
+        comment.save(force_insert=True)
+        return Response({'status': 'success'})
+    except:
+        return Response({"status": "failed", "error": "internal server error"})
+
+
+@csrf_exempt
+@api_view(['POST'])
+def edit_comment(request):
+    if "token" not in request.POST or 'comment_id' not in request.POST:
+        return Response({"status": "failed", "error": "must include token, new content and comment id"})
+
+    if not token.isValidToken(request.POST.get("token")):
+        return Response({"status": "failed", "error": "invalid token"})
+
+    payload = token.decode(request.POST.get("token"))
+
+    try:
+        comment_id = request.POST.get('comment_id')
+        new_content = request.POST.get('new_content')
+    except:
+        return Response({"status": "failed", "error": "parameter error"})
+
+    comment = Comment.objects.get(comment_id=comment_id)
+
+    if payload.get('user_id') == comment.author.user_id:
+        comment.raw_content = new_content
+        comment.is_edited = True
+    else:
+        return Response({"status": "failed", "error": 'user can edit only own comment'})
+
+    try:
+        comment.save()
         return Response({'status': 'success'})
     except:
         return Response({"status": "failed", "error": "internal server error"})
