@@ -12,18 +12,18 @@ from api.posts.models import Post
 @csrf_exempt
 @api_view(['POST'])
 def create_comment(request):
-    if 'access_token' not in request.POST or "content" not in request.POST:
-        return Response({"status": "failed", "error": "must include token, title, content and content type"})
+    if 'access_token' not in request.POST or 'content' not in request.POST or 'post_id' not in request.POST:
+        return Response({"status": "failed", "error": "must include token, content and post_id"})
 
     if not token.isValidToken(request.POST.get("access_token")):
         return Response({"status": "failed", "error": "invalid token"})
 
     payload = token.decode(request.POST.get("access_token"))
 
-    user_id = payload.get("user_id")
+    user_id = payload.get('user_id')
     post_id = request.POST.get('post_id')
     parent_id = request.POST.get('parent_id')
-    raw_content = request.POST.get("content")
+    raw_content = request.POST.get('content')
 
     if parent_id is not None:
         parent = models.Comment.objects.get(comment_id=parent_id)
@@ -55,10 +55,12 @@ def edit_comment(request):
     comment_id = request.POST.get('comment_id')
     new_content = request.POST.get('new_content')
 
-    try:
-        comment = models.Comment.objects.get(comment_id=comment_id)
-    except:
+    comment = models.Comment.objects.filter(comment_id=comment_id).first()
+    if comment is None:
         return Response({"status": "failed", "error": "comment doesn't exist"})
+
+    if comment.status == 2:
+        return Response({"status": "failed", "error": 'comment deleted, editing is forbidden'})
 
     if payload.get('user_id') == comment.author.user_id:
         comment.raw_content = new_content
@@ -77,7 +79,7 @@ def edit_comment(request):
 @api_view(['POST'])
 def delete_comment(request):
     if "access_token" not in request.POST or 'comment_id' not in request.POST:
-        return Response({"status": "failed", "error": "must include token, new content and comment id"})
+        return Response({"status": "failed", "error": "must include token and comment id"})
 
     if not token.isValidToken(request.POST.get("access_token")):
         return Response({"status": "failed", "error": "invalid token"})
@@ -85,13 +87,12 @@ def delete_comment(request):
     payload = token.decode(request.POST.get("access_token"))
     comment_id = request.POST.get('comment_id')
 
-    try:
-        comment = models.Comment.objects.get(comment_id=comment_id)
-    except:
+    comment = models.Comment.objects.filter(comment_id=comment_id).first()
+    if comment is None:
         return Response({"status": "failed", "error": "comment doesn't exist"})
 
     if payload.get('user_id') != comment.author.user_id:
-        return Response({"status": "failed", "error": 'user can edit only own comment'})
+        return Response({"status": "failed", "error": 'user can only delete own comment'})
 
     comment.status = 2
     try:
