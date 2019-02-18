@@ -68,6 +68,22 @@ def get_post(request):
 			vote = models.Vote.objects.get(user_id=user_id, vote_type=0, object_id=post.post_id).vote_value
 		except models.Vote.DoesNotExist:
 			vote = 0
+
+		if post.is_deleted:
+			return Response({'status': 'success', 'post': {
+				'post_id': post.post_id,
+				'author_id': "[deleted]",
+				'author_name': "[deleted]",
+				'date_posted': "[deleted]",
+				'score': "[deleted]",
+				'user_vote': "[deleted]",
+				'title': "[deleted]",
+				'content_type': "[deleted]",
+				'content': "[deleted]",
+				'tags': "[deleted]",
+				'is_deleted': post.is_deleted
+			}})
+
 		return Response({'status': 'success', 'post': {
 			'post_id': post.post_id,
 			'author_id': post.author_id,
@@ -78,7 +94,8 @@ def get_post(request):
 			'title': post.title,
 			'content_type': post.content_type,
 			'content': post.raw_content,
-			'tags': [tag.tag_value for tag in post.tag_set.all()]
+			'tags': [tag.tag_value for tag in post.tag_set.all()],
+			'is_deleted': post.is_deleted
 		}})
 	except models.Post.DoesNotExist:
 		return Response({"status": "failed", "error": "no matching post found"})
@@ -154,6 +171,8 @@ def list_posts(request):
 		if tags[0]:
 			# count = number of matched tags
 			posts = posts.filter(tag__in=[tag.id for tag in models.Tag.objects.filter(tag_value__in=tags)]).annotate(count=Count("post_id")).distinct()
+
+		posts = posts.filter(is_deleted=False)
 		
 		if order == "newest":
 			posts = posts.order_by("-date_posted")
@@ -177,7 +196,35 @@ def list_posts(request):
 			'title': post.title,
 			'content_type': post.content_type,
 			'content': post.raw_content,
-			'tags': [tag.tag_value for tag in post.tag_set.all()]
+			'tags': [tag.tag_value for tag in post.tag_set.all()],
+			'is_deleted': post.is_deleted
 		} for post in posts[begin_from:limit]]})
+	except:
+		return Response({"status": "failed", "error": "internal server error"})
+
+@csrf_exempt
+@api_view(['POST'])
+def delete_post(request):
+	if "access_token" not in request.POST or "id" not in request.POST:
+		return Response({"status": "failed", "error": "must include token and post id"})
+
+	if not token.isValidToken(request.POST.get("access_token")):
+		return Response({"status": "failed", "error": "invalid token"})
+
+	payload = token.decode(request.POST.get("access_token"))
+
+	user_id = payload.get("user_id")
+
+	try:
+		post = models.Post.objects.get(post_id=request.POST.get("id"))
+		if user_id != post.author_id:	# check the user deleting the post has authorization to delete it.
+			return Response({"status": "failed", "error": "invalid authorization to delete post"})
+
+		post.is_deleted = True
+		post.save()
+
+		return Response({'status': 'success'})
+	except models.Post.DoesNotExist:
+		return Response({"status": "failed", "error": "no matching post found"})
 	except:
 		return Response({"status": "failed", "error": "internal server error"})

@@ -13,6 +13,7 @@ class Post(models.Model):
     comments = models.IntegerField(default=0)
     date_posted = models.DateTimeField(auto_now_add=True)
     score = models.IntegerField(default=0)
+    is_deleted = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'posts'
