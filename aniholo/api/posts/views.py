@@ -228,3 +228,38 @@ def delete_post(request):
 		return Response({"status": "failed", "error": "no matching post found"})
 	except:
 		return Response({"status": "failed", "error": "internal server error"})
+
+@csrf_exempt
+@api_view(['POST'])
+def edit_post(request):
+	if "access_token" not in request.POST or "id" not in request.POST:
+		return Response({"status": "failed", "error": "must include token and post id"})
+
+	if not token.isValidToken(request.POST.get("access_token")):
+		return Response({"status": "failed", "error": "invalid token"})
+
+	payload = token.decode(request.POST.get("access_token"))
+
+	user_id = payload.get("user_id")
+
+	try:
+		post = models.Post.objects.get(post_id=request.POST.get("id"))
+		if user_id != post.author_id:	# check the user editing the post has authorization to edit it.
+			return Response({"status": "failed", "error": "invalid authorization to edit post"})
+
+		if "content" in request.POST:
+			post.raw_content = request.POST.get("content")
+
+		if "tags" in request.POST:
+			tags = str(request.POST.get("tags")).split(',')
+			for tag in tags:
+				tag, _ = models.Tag.objects.get_or_create(tag_value=tag)
+				tag.post.add(post)
+
+		post.save()
+
+		return Response({"status": "success"})
+	except models.Post.DoesNotExist:
+		return Response({"status": "failed", "error": "no matching post found"})
+	except:
+		return Response({"status": "failed", "error": "internal server error"})
