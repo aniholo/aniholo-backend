@@ -159,6 +159,7 @@ def list_posts(request):
 		order = request.POST.get("sort", "relevance")
 		limit = int(request.POST.get("limit", 20))
 		limit = limit if limit < 100 else 20
+		author_id = request.POST.get("author_id", "")
 		begin_from = int(request.POST.get("from", 0))
 	except:
 		return Response({"status": "failed", "error": "parameter error"})
@@ -172,7 +173,18 @@ def list_posts(request):
 			# count = number of matched tags
 			posts = posts.filter(tag__in=[tag.id for tag in models.Tag.objects.filter(tag_value__in=tags)]).annotate(count=Count("post_id")).distinct()
 
+		# remove deleted posts from being listed
 		posts = posts.filter(is_deleted=False)
+
+		# get posts from a specified author, if requested
+		if author_id != "":
+			# check if the author exists
+			try:
+				record = User.objects.get(user_id=author_id)
+			except User.DoesNotExist:
+				return Response({"status": "failed", "error": "author does not exist"})
+
+			posts = posts.filter(author=author_id)
 		
 		if order == "newest":
 			posts = posts.order_by("-date_posted")
