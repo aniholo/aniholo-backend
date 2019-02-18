@@ -121,3 +121,38 @@ def register(request):
 		return Response({"status": "failed", "error": "user already exists"})
 	except:
 		return Response({"status": "failed", "error": "internal server error"})
+
+@csrf_exempt
+@api_view(['POST'])
+def reset_tokens(request):
+	# this method will also invalidate the token used to call this method.
+	# in the future, may have function return a new, valid token.
+
+	if "access_token" not in request.POST or "user_id" not in request.POST:
+		return Response({"status": "failed", "error": "must include user id and token"})
+
+	if not token.isValidToken(request.POST.get("access_token")):
+		return Response({"status": "failed", "error": "invalid token"})
+
+	payload = token.decode(request.POST.get("access_token"))
+	
+	token_user_id = payload.get('user_id')
+
+	if request.POST.get("user_id") != token_user_id:
+		return Response({"status": "failed", "error": "user ids don't match"})
+
+	try:
+		record = models.User.objects.get(user_id=token_user_id)
+	except models.User.DoesNotExist:
+		# in case, some how the user is removed from database while still having a token
+		# may not be necessary but just for caution.
+		return Response({"status": "failed", "error": "user does not exist"})
+
+	record.secret = secrets.token_hex(16)
+
+	try:
+		record.save()
+	except:
+		return Response({"status": "failed", "error": "internal server error"})
+
+	return Response({"status": "success"})
