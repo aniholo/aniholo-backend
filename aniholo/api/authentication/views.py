@@ -20,6 +20,8 @@ from django.utils import timezone
 EXPIRATION_TIME = 600  # 10 mins
 REFRESH_EXPIRATION_TIME = 86400  # 1 day
 
+VALID_USER_PERMS = ['user', 'moderator', 'admin']
+
 @csrf_exempt 
 @api_view(['POST'])
 def login_request(request):
@@ -152,6 +154,51 @@ def reset_tokens(request):
 
 	try:
 		record.save()
+	except:
+		return Response({"status": "failed", "error": "internal server error"})
+
+	return Response({"status": "success"})
+
+@csrf_exempt
+@api_view(['POST'])
+def change_perms(request):
+	# change the user permissions of a user
+	# this can only be done by a user who has admin perms.
+	
+	if "access_token" not in request.POST or "user_id" not in request.POST or "new_role" not in request.POST:
+		return Response({"status": "failed", "error": "must include user id, token, and new permission role"})
+
+	if not token.isValidToken(request.POST.get("access_token")):
+		return Response({"status": "failed", "error": "invalid token"})
+
+	payload = token.decode(request.POST.get("access_token"))	
+	token_user_id = payload.get('user_id')	
+
+	try:
+		requesting_user_record = models.User.objects.get(user_id=token_user_id)
+	except models.User.DoesNotExist:
+		# in case, some how the user is removed from database while still having a token
+		# may not be necessary but just for caution.
+		return Response({"status": "failed", "error": "user does not exist"})
+
+	# check the user to be changed exists
+	try:
+		changing_user_record = models.User.objects.get(user_id=request.POST.get('user_id'))
+	except models.User.DoesNotExist:
+		return Response({"status": "failed", "error": "user does not exist"})
+
+	# check that the user is indeed an admin
+	if requesting_user_record.user_perms != "admin":
+		return Response({"status": "failed", "error": "invalid authorization to change user role"})
+
+	# check that the new role is a valid role.
+	if request.POST.get('new_role').lower() not in VALID_USER_PERMS:
+		return Response({"status": "failed", "error": "invalid user role provided"})
+
+	changing_user_record.user_perms = request.POST.get('new_role').lower()
+
+	try:
+		changing_user_record.save()
 	except:
 		return Response({"status": "failed", "error": "internal server error"})
 
