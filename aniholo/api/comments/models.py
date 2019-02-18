@@ -11,7 +11,7 @@ class Comment(MPTTModel):
     raw_content = models.TextField()
     parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children', db_index=True)
     date_posted = models.DateTimeField(auto_now_add=True)
-    is_edited = models.BooleanField(default=False)
+    status = models.SmallIntegerField(default=0)  # 0 - default, 1 - edited, 2 - deleted
 
     class MPTTMeta:
         order_by_insertion = ['-score']
