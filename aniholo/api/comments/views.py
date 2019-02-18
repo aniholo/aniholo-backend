@@ -6,7 +6,7 @@ from . import models
 from aniholo import settings
 from api.authentication import token
 from api.authentication.models import User
-from api.posts.models import Post, Comment
+from api.posts.models import Post
 
 
 @csrf_exempt
@@ -29,11 +29,11 @@ def create_comment(request):
         return Response({"status": "failed", "error": "parameter error"})
 
     if parent_id is not None:
-        parent = Comment.objects.get(comment_id=parent_id)
+        parent = models.Comment.objects.get(comment_id=parent_id)
     else:
         parent = None
 
-    comment = Comment(author=User.objects.get(user_id=user_id),
+    comment = models.Comment(author=User.objects.get(user_id=user_id),
                    post=Post.objects.get(post_id=post_id),
                    parent=parent,
                    raw_content=raw_content)
@@ -62,7 +62,7 @@ def edit_comment(request):
     except:
         return Response({"status": "failed", "error": "parameter error"})
 
-    comment = Comment.objects.get(comment_id=comment_id)
+    comment = models.Comment.objects.get(comment_id=comment_id)
 
     if payload.get('user_id') == comment.author.user_id:
         comment.raw_content = new_content

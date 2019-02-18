@@ -5,11 +5,12 @@ from django.db.utils import IntegrityError
 from django.db.models import Count
 from django.utils.dateformat import format
 from rest_framework.decorators import api_view
-from api.authentication.models import User
 
 from . import models
 from aniholo import settings
 from api.authentication import token
+from api.authentication.models import User
+from api.comments.models import Comment
 
 import time
 import ast
@@ -114,13 +115,13 @@ def vote(request):
 				post.score += update_value
 				post.save(force_update=True)
 			else:
-				comment = models.Comment.objects.get(comment_id=object_id)
+				comment = Comment.objects.get(comment_id=object_id)
 				comment.score += update_value
 				comment.save(force_update=True)
 			vote.vote_value = vote_value
 			vote.save(force_update=True)
 		return Response({'status': 'success'})
-	except (models.Post.DoesNotExist, models.Comment.DoesNotExist):
+	except (models.Post.DoesNotExist, Comment.DoesNotExist):
 		return Response({"status": "failed", "error": "no matching object found"})
 	except:
 		return Response({"status": "failed", "error": "internal server error"})
