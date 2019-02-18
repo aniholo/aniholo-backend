@@ -48,7 +48,7 @@ def create_comment(request):
 @csrf_exempt
 @api_view(['POST'])
 def edit_comment(request):
-    if "token" not in request.POST or 'comment_id' not in request.POST:
+    if "token" not in request.POST or 'comment_id' not in request.POST or 'new_content' not in request.POST:
         return Response({"status": "failed", "error": "must include token, new content and comment id"})
 
     if not token.isValidToken(request.POST.get("token")):
@@ -75,3 +75,40 @@ def edit_comment(request):
         return Response({'status': 'success'})
     except:
         return Response({"status": "failed", "error": "internal server error"})
+
+
+# TODO delete author
+@csrf_exempt
+@api_view(['POST'])
+def delete_comment(request):
+    if "token" not in request.POST or 'comment_id' not in request.POST:
+        return Response({"status": "failed", "error": "must include token, new content and comment id"})
+
+    if not token.isValidToken(request.POST.get("token")):
+        return Response({"status": "failed", "error": "invalid token"})
+
+    payload = token.decode(request.POST.get("token"))
+
+    try:
+        comment_id = request.POST.get('comment_id')
+    except:
+        return Response({"status": "failed", "error": "parameter error"})
+
+    comment = models.Comment.objects.get(comment_id=comment_id)
+
+    if payload.get('user_id') != comment.author.user_id:
+        return Response({"status": "failed", "error": 'user can edit only own comment'})
+
+    if comment.get_descendant_count() == 0:
+        try:
+            comment.delete()
+            return Response({'status': 'success'})
+        except:
+            return Response({"status": "failed", "error": "internal server error"})
+    else:
+        comment.raw_content = '[deleted]'
+        try:
+            comment.save()
+            return Response({'status': 'success'})
+        except:
+            return Response({"status": "failed", "error": "internal server error"})
