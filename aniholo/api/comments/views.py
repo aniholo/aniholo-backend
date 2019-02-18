@@ -20,13 +20,10 @@ def create_comment(request):
 
     payload = token.decode(request.POST.get("token"))
 
-    try:
-        user_id = payload.get("user_id")
-        post_id = request.POST.get('post_id')
-        parent_id = request.POST.get('parent_id')
-        raw_content = request.POST.get("content")
-    except:
-        return Response({"status": "failed", "error": "parameter error"})
+    user_id = payload.get("user_id")
+    post_id = request.POST.get('post_id')
+    parent_id = request.POST.get('parent_id')
+    raw_content = request.POST.get("content")
 
     if parent_id is not None:
         parent = models.Comment.objects.get(comment_id=parent_id)
@@ -56,11 +53,8 @@ def edit_comment(request):
 
     payload = token.decode(request.POST.get("token"))
 
-    try:
-        comment_id = request.POST.get('comment_id')
-        new_content = request.POST.get('new_content')
-    except:
-        return Response({"status": "failed", "error": "parameter error"})
+    comment_id = request.POST.get('comment_id')
+    new_content = request.POST.get('new_content')
 
     comment = models.Comment.objects.get(comment_id=comment_id)
 
@@ -89,10 +83,7 @@ def delete_comment(request):
 
     payload = token.decode(request.POST.get("token"))
 
-    try:
-        comment_id = request.POST.get('comment_id')
-    except:
-        return Response({"status": "failed", "error": "parameter error"})
+    comment_id = request.POST.get('comment_id')
 
     comment = models.Comment.objects.get(comment_id=comment_id)
 
