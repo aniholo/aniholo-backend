@@ -69,7 +69,7 @@ def get_post(request):
 		except models.Vote.DoesNotExist:
 			vote = 0
 
-		if post.is_deleted:
+		if post.status == 2:
 			return Response({'status': 'success', 'post': {
 				'post_id': post.post_id,
 				'author_id': "[deleted]",
@@ -81,7 +81,8 @@ def get_post(request):
 				'content_type': "[deleted]",
 				'content': "[deleted]",
 				'tags': "[deleted]",
-				'is_deleted': post.is_deleted
+				'is_edited': "[deleted]",
+				'is_deleted': post.status == 2
 			}})
 
 		return Response({'status': 'success', 'post': {
@@ -95,7 +96,8 @@ def get_post(request):
 			'content_type': post.content_type,
 			'content': post.raw_content,
 			'tags': [tag.tag_value for tag in post.tag_set.all()],
-			'is_deleted': post.is_deleted
+			'is_edited': post.status == 1,
+			'is_deleted': post.status == 2
 		}})
 	except models.Post.DoesNotExist:
 		return Response({"status": "failed", "error": "no matching post found"})
@@ -174,7 +176,7 @@ def list_posts(request):
 			posts = posts.filter(tag__in=[tag.id for tag in models.Tag.objects.filter(tag_value__in=tags)]).annotate(count=Count("post_id")).distinct()
 
 		# remove deleted posts from being listed
-		posts = posts.filter(is_deleted=False)
+		posts = posts.filter().exclude(status=2)
 
 		# get posts from a specified author, if requested
 		if author_id != "":
@@ -209,7 +211,8 @@ def list_posts(request):
 			'content_type': post.content_type,
 			'content': post.raw_content,
 			'tags': [tag.tag_value for tag in post.tag_set.all()],
-			'is_deleted': post.is_deleted
+			'is_edited': post.status == 1,
+			'is_deleted': post.status == 2
 		} for post in posts[begin_from:limit]]})
 	except:
 		return Response({"status": "failed", "error": "internal server error"})
@@ -232,7 +235,7 @@ def delete_post(request):
 		if user_id != post.author_id:	# check the user deleting the post has authorization to delete it.
 			return Response({"status": "failed", "error": "invalid authorization to delete post"})
 
-		post.is_deleted = True
+		post.status = 2
 		post.save()
 
 		return Response({'status': 'success'})
@@ -271,6 +274,9 @@ def edit_post(request):
 			for tag in tags:
 				tag, _ = models.Tag.objects.get_or_create(tag_value=tag)
 				tag.post.add(post)
+
+
+		post.status = 1
 
 		post.save()
 
