@@ -203,3 +203,34 @@ def change_perms(request):
 		return Response({"status": "failed", "error": "internal server error"})
 
 	return Response({"status": "success"})
+
+@csrf_exempt
+@api_view(['POST'])
+def change_pass(request):
+	if "access_token" not in request.POST or "new_password" not in request.POST or "old_password" not in request.POST:
+		return Response({"status": "failed", "error": "must include token, new password, and old password"})
+
+	if not token.isValidToken(request.POST.get("access_token")):
+		return Response({"status": "failed", "error": "invalid token"})
+
+	payload = token.decode(request.POST.get("access_token"))
+	token_user_id = payload.get('user_id')
+
+	old_password = request.POST.get('old_password')
+
+	try:
+		user = models.User.objects.get(user_id=token_user_id)
+	except models.User.DoesNotExist:
+		return Response({"status": "failed", "error": "user does not exist"})
+	
+	if (not argon2.verify(old_password, user.password)):
+		return Response({"status": "failed", "error": "current password provided is incorrect"})
+
+	user.password = argon2.using(rounds=10).hash(request.POST.get("new_password"))
+
+	try:
+		user.save()
+	except:
+		return Response({"status": "failed", "error": "internal server error"})
+
+	return Response({"status": "success"})
