@@ -263,6 +263,10 @@ def edit_post(request):
 			post.raw_content = request.POST.get("content")
 
 		if "tags" in request.POST:
+			# Delete all the tags for this post in the database, and then add the new ones.
+			for tag in post.tag_set.all():
+				tag.post.remove(post)
+
 			tags = str(request.POST.get("tags")).split(',')
 			for tag in tags:
 				tag, _ = models.Tag.objects.get_or_create(tag_value=tag)
