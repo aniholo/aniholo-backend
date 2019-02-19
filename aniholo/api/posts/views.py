@@ -18,13 +18,13 @@ from types import SimpleNamespace
 @csrf_exempt 
 @api_view(['POST'])
 def create_post(request):
-	if "token" not in request.POST or "title" not in request.POST or "content" not in request.POST or "content_type" not in request.POST:
+	if "access_token" not in request.POST or "title" not in request.POST or "content" not in request.POST or "content_type" not in request.POST:
 		return Response({"status": "failed", "error": "must include token, title, content and content type"})
 
-	if not token.isValidToken(request.POST.get("token")):
+	if not token.isValidToken(request.POST.get("access_token")):
 		return Response({"status": "failed", "error": "invalid token"})
 
-	payload = token.decode(request.POST.get("token"))
+	payload = token.decode(request.POST.get("access_token"))
 
 	try:
 		user_id = payload.get("user_id")
@@ -35,7 +35,7 @@ def create_post(request):
 	except:
 		return Response({"status": "failed", "error": "parameter error"})
 
-	post = models.Post(author=User.objects.get(user_id=user_id), author_name=user_id, title=title,
+	post = models.Post(author=User.objects.get(user_id=user_id), title=title,
 						raw_content=raw_content, content_type=content_type)
 
 	try:
@@ -52,13 +52,13 @@ def create_post(request):
 @csrf_exempt 
 @api_view(['POST'])
 def get_post(request):
-	if "token" not in request.POST or "id" not in request.POST:
+	if "access_token" not in request.POST or "id" not in request.POST:
 		return Response({"status": "failed", "error": "must include token and post id"})
 
-	if not token.isValidToken(request.POST.get("token")):
+	if not token.isValidToken(request.POST.get("access_token")):
 		return Response({"status": "failed", "error": "invalid token"})
 
-	payload = token.decode(request.POST.get("token"))
+	payload = token.decode(request.POST.get("access_token"))
 
 	user_id = payload.get("user_id")
 
@@ -68,6 +68,23 @@ def get_post(request):
 			vote = models.Vote.objects.get(user_id=user_id, vote_type=0, object_id=post.post_id).vote_value
 		except models.Vote.DoesNotExist:
 			vote = 0
+
+		if post.status == 2:
+			return Response({'status': 'success', 'post': {
+				'post_id': post.post_id,
+				'author_id': "[deleted]",
+				'author_name': "[deleted]",
+				'date_posted': "[deleted]",
+				'score': "[deleted]",
+				'user_vote': "[deleted]",
+				'title': "[deleted]",
+				'content_type': "[deleted]",
+				'content': "[deleted]",
+				'tags': "[deleted]",
+				'is_edited': "[deleted]",
+				'is_deleted': post.status == 2
+			}})
+
 		return Response({'status': 'success', 'post': {
 			'post_id': post.post_id,
 			'author_id': post.author_id,
@@ -78,7 +95,9 @@ def get_post(request):
 			'title': post.title,
 			'content_type': post.content_type,
 			'content': post.raw_content,
-			'tags': [tag.tag_value for tag in post.tag_set.all()]
+			'tags': [tag.tag_value for tag in post.tag_set.all()],
+			'is_edited': post.status == 1,
+			'is_deleted': post.status == 2
 		}})
 	except models.Post.DoesNotExist:
 		return Response({"status": "failed", "error": "no matching post found"})
@@ -88,13 +107,13 @@ def get_post(request):
 @csrf_exempt 
 @api_view(['POST'])
 def vote(request):
-	if "token" not in request.POST or "id" not in request.POST or "type" not in request.POST or "value" not in request.POST:
+	if "access_token" not in request.POST or "id" not in request.POST or "type" not in request.POST or "value" not in request.POST:
 		return Response({"status": "failed", "error": "must include token, object id, object type and vote value"})
 
-	if not token.isValidToken(request.POST.get("token")):
+	if not token.isValidToken(request.POST.get("access_token")):
 		return Response({"status": "failed", "error": "invalid token"})
 
-	payload = token.decode(request.POST.get("token"))
+	payload = token.decode(request.POST.get("access_token"))
 
 	user_id = payload.get("user_id")
 
@@ -128,13 +147,13 @@ def vote(request):
 @csrf_exempt 
 @api_view(['POST'])
 def list_posts(request):
-	if "token" not in request.POST:
-		return Response({"status": "failed", "error": "must include token and post id"})
+	if "access_token" not in request.POST:
+		return Response({"status": "failed", "error": "must include token"})
 
-	if not token.isValidToken(request.POST.get("token")):
+	if not token.isValidToken(request.POST.get("access_token")):
 		return Response({"status": "failed", "error": "invalid token"})
 
-	payload = token.decode(request.POST.get("token"))
+	payload = token.decode(request.POST.get("access_token"))
 	user_id = payload.get("user_id")
 
 	try:
@@ -142,6 +161,7 @@ def list_posts(request):
 		order = request.POST.get("sort", "relevance")
 		limit = int(request.POST.get("limit", 20))
 		limit = limit if limit < 100 else 20
+		author_id = request.POST.get("author_id", "")
 		begin_from = int(request.POST.get("from", 0))
 	except:
 		return Response({"status": "failed", "error": "parameter error"})
@@ -154,6 +174,19 @@ def list_posts(request):
 		if tags[0]:
 			# count = number of matched tags
 			posts = posts.filter(tag__in=[tag.id for tag in models.Tag.objects.filter(tag_value__in=tags)]).annotate(count=Count("post_id")).distinct()
+
+		# remove deleted posts from being listed
+		posts = posts.filter().exclude(status=2)
+
+		# get posts from a specified author, if requested
+		if author_id != "":
+			# check if the author exists
+			try:
+				record = User.objects.get(user_id=author_id)
+			except User.DoesNotExist:
+				return Response({"status": "failed", "error": "author does not exist"})
+
+			posts = posts.filter(author=author_id)
 		
 		if order == "newest":
 			posts = posts.order_by("-date_posted")
@@ -161,9 +194,11 @@ def list_posts(request):
 			posts = posts.order_by("date_posted")
 		elif order == "top":
 			posts = posts.order_by("-score", "-date_posted")
+		elif tags[0]:
+			posts = posts.order_by("-count", "-date_posted")  # relevance when tags are specified
 		else:
-			posts = posts.order_by("-count", "-date_posted")
-			pass  # haven't found a way to do this yet, relevance should depend on a combination age and score as well (rn only on number of matched tags and age if equal)
+			posts = posts.order_by("-date_posted")  # normal relevance
+			# haven't found a way to do this yet, relevance should depend on a combination age and score as well (rn only on number of matched tags(^) and age if equal/only age)
 		
 		return Response({'status': 'success', 'posts': [{
 			'post_id': post.post_id,
@@ -175,7 +210,78 @@ def list_posts(request):
 			'title': post.title,
 			'content_type': post.content_type,
 			'content': post.raw_content,
-			'tags': [tag.tag_value for tag in post.tag_set.all()]
+			'tags': [tag.tag_value for tag in post.tag_set.all()],
+			'is_edited': post.status == 1,
+			'is_deleted': post.status == 2
 		} for post in posts[begin_from:limit]]})
+	except:
+		return Response({"status": "failed", "error": "internal server error"})
+
+@csrf_exempt
+@api_view(['POST'])
+def delete_post(request):
+	if "access_token" not in request.POST or "id" not in request.POST:
+		return Response({"status": "failed", "error": "must include token and post id"})
+
+	if not token.isValidToken(request.POST.get("access_token")):
+		return Response({"status": "failed", "error": "invalid token"})
+
+	payload = token.decode(request.POST.get("access_token"))
+
+	user_id = payload.get("user_id")
+
+	try:
+		post = models.Post.objects.get(post_id=request.POST.get("id"))
+		if user_id != post.author_id:	# check the user deleting the post has authorization to delete it.
+			return Response({"status": "failed", "error": "invalid authorization to delete post"})
+
+		post.status = 2
+		post.save()
+
+		return Response({'status': 'success'})
+	except models.Post.DoesNotExist:
+		return Response({"status": "failed", "error": "no matching post found"})
+	except:
+		return Response({"status": "failed", "error": "internal server error"})
+
+@csrf_exempt
+@api_view(['POST'])
+def edit_post(request):
+	if "access_token" not in request.POST or "id" not in request.POST:
+		return Response({"status": "failed", "error": "must include token and post id"})
+
+	if not token.isValidToken(request.POST.get("access_token")):
+		return Response({"status": "failed", "error": "invalid token"})
+
+	payload = token.decode(request.POST.get("access_token"))
+
+	user_id = payload.get("user_id")
+
+	try:
+		post = models.Post.objects.get(post_id=request.POST.get("id"))
+		if user_id != post.author_id:	# check the user editing the post has authorization to edit it.
+			return Response({"status": "failed", "error": "invalid authorization to edit post"})
+
+		if "content" in request.POST:
+			post.raw_content = request.POST.get("content")
+
+		if "tags" in request.POST:
+			# Delete all the tags for this post in the database, and then add the new ones.
+			for tag in post.tag_set.all():
+				tag.post.remove(post)
+
+			tags = str(request.POST.get("tags")).split(',')
+			for tag in tags:
+				tag, _ = models.Tag.objects.get_or_create(tag_value=tag)
+				tag.post.add(post)
+
+
+		post.status = 1
+
+		post.save()
+
+		return Response({"status": "success"})
+	except models.Post.DoesNotExist:
+		return Response({"status": "failed", "error": "no matching post found"})
 	except:
 		return Response({"status": "failed", "error": "internal server error"})
