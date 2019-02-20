@@ -26,12 +26,20 @@ def create_comment(request):
     raw_content = request.POST.get('content')
 
     if parent_id is not None:
-        parent = models.Comment.objects.get(comment_id=parent_id)
+        try:
+            parent = models.Comment.objects.get(comment_id=parent_id)
+        except models.Comment.DoesNotExist:
+            return Response({"status": "failed", "error": "parent comment does not exist"})
     else:
         parent = None
 
+    try:
+        post = Post.objects.get(post_id=post_id)
+    except Post.DoesNotExist:
+        return Response({"status": "failed", "error": "post does not exist"}) 
+
     comment = models.Comment(author=User.objects.get(user_id=user_id),
-                   post=Post.objects.get(post_id=post_id),
+                   post=post,
                    parent=parent,
                    raw_content=raw_content)
 
