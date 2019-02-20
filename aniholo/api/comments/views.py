@@ -114,8 +114,12 @@ def get_comment(request):
     payload = token.decode(request.POST.get("access_token"))
     user_id = payload.get("user_id")
 
-    comment_id = request.POST.get('comment_id')
-    depth = int(request.POST.get('depth', 10))
+    try:
+        comment_id = int(request.POST.get('comment_id'))
+        depth = int(request.POST.get('depth', 10))
+        order_type = request.POST.get('order_type', 'best')
+    except:
+        return Response({"status": "failed", "error": "parameter error"})
 
     comment = models.Comment.objects.filter(comment_id=comment_id).first()
     if comment is None:
@@ -146,12 +150,13 @@ def get_comment(request):
                 'content': comment.raw_content,
                 'parent_id': comment.parent_id,
                 'children': []}
-    add_nodes(comment.get_children(), tree, user_id, 1, depth)
+    add_nodes(get_children(comment, order_type), tree, user_id, 1, depth, order_type)
     return Response({'status': 'success', 'tree': tree})
 
 
-def add_nodes(q_set, tree, user_id, current_depth, depth):
+def add_nodes(q_set, tree, user_id, current_depth, depth, order_type):
     ''' recursive tree building '''
+    print(q_set)
     if q_set is None or current_depth == depth:
         return None
     i = 0
@@ -180,5 +185,13 @@ def add_nodes(q_set, tree, user_id, current_depth, depth):
                                      'content': node.raw_content,
                                      'parent_id': node.parent_id,
                                      'children': []})
-        add_nodes(node.get_children(), tree['children'][i], user_id, current_depth + 1, depth)
+        add_nodes(get_children(node, order_type), tree['children'][i], user_id, current_depth + 1, depth, order_type)
         i += 1
+
+
+def get_children(node, order_type):
+    comments = models.Comment.objects.all().filter(parent_id=node.comment_id)
+    if order_type == 'best':
+        return comments.order_by('-score')
+    else:
+        return comments.order_by('-date_posted')
