@@ -156,7 +156,6 @@ def get_comment(request):
 
 def add_nodes(q_set, tree, user_id, current_depth, depth, order_type):
     ''' recursive tree building '''
-    print(q_set)
     if q_set is None or current_depth == depth:
         return None
     i = 0
@@ -190,7 +189,7 @@ def add_nodes(q_set, tree, user_id, current_depth, depth, order_type):
 
 
 def get_children(node, order_type):
-    comments = models.Comment.objects.all().filter(parent_id=node.comment_id)
+    comments = models.Comment.objects.filter(parent_id=node.comment_id)
     if order_type == 'best':
         return comments.order_by('-score')
     else:
