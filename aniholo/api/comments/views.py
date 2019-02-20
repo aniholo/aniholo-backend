@@ -115,10 +115,7 @@ def get_comment(request):
     user_id = payload.get("user_id")
 
     comment_id = request.POST.get('comment_id')
-    try:
-        depth = int(request.POST.get('depth'))
-    except:
-        depth = 10  # default depth
+    depth = int(request.POST.get('depth', 10))
 
     comment = models.Comment.objects.filter(comment_id=comment_id).first()
     if comment is None:
