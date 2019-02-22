@@ -3,6 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.response import Response
 
 from . import models
+from .utils import get_children, add_nodes
 from aniholo import settings
 from api.authentication import token
 from api.authentication.models import User
@@ -122,8 +123,12 @@ def get_comment(request):
     payload = token.decode(request.POST.get("access_token"))
     user_id = payload.get("user_id")
 
-    comment_id = request.POST.get('comment_id')
-    depth = int(request.POST.get('depth', 10))
+    try:
+        comment_id = int(request.POST.get('comment_id'))
+        depth = int(request.POST.get('depth', 10))
+        order_type = request.POST.get('order_type', 'best')
+    except:
+        return Response({"status": "failed", "error": "parameter error"})
 
     comment = models.Comment.objects.filter(comment_id=comment_id).first()
     if comment is None:
@@ -154,39 +159,5 @@ def get_comment(request):
                 'content': comment.raw_content,
                 'parent_id': comment.parent_id,
                 'children': []}
-    add_nodes(comment.get_children(), tree, user_id, 1, depth)
+    add_nodes(get_children(comment, order_type), tree, user_id, 1, depth, order_type)
     return Response({'status': 'success', 'tree': tree})
-
-
-def add_nodes(q_set, tree, user_id, current_depth, depth):
-    ''' recursive tree building '''
-    if q_set is None or current_depth == depth:
-        return None
-    i = 0
-    for node in q_set:
-        vote = Vote.objects.filter(user_id=user_id, vote_type=0, object_id=node.comment_id).first()
-        if vote is None:
-            vote = 0
-        else:
-            vote = vote.vote_value
-        if node.status == 2:
-            tree['children'].append({'comment_id': node.comment_id,
-                                     'author_id': "[deleted]",
-                                     'author_name': "[deleted]",
-                                     'date_posted': "[deleted]",
-                                     'score': "[deleted]",
-                                     'user_vote': "[deleted]",
-                                     'content': "[deleted]",
-                                     'children': []})
-        else:
-            tree['children'].append({'comment_id': node.comment_id,
-                                     'author_id': node.author.user_id,
-                                     'author_name': node.author.username,
-                                     'date_posted': node.date_posted,
-                                     'score': node.score,
-                                     'user_vote': vote,
-                                     'content': node.raw_content,
-                                     'parent_id': node.parent_id,
-                                     'children': []})
-        add_nodes(node.get_children(), tree['children'][i], user_id, current_depth + 1, depth)
-        i += 1

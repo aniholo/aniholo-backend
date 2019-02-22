@@ -9,6 +9,7 @@ from rest_framework.decorators import api_view
 from . import models
 from aniholo import settings
 from api.authentication import token
+from api.comments.utils import get_children, add_nodes
 from api.authentication.models import User
 from api.comments.models import Comment
 
@@ -16,7 +17,7 @@ import time
 import ast
 from types import SimpleNamespace
 
-@csrf_exempt 
+@csrf_exempt
 @api_view(['POST'])
 def create_post(request):
 	if "token" not in request.POST or "title" not in request.POST or "content" not in request.POST or "content_type" not in request.POST:
@@ -50,7 +51,7 @@ def create_post(request):
 	except:
 		return Response({"status": "failed", "error": "internal server error"})
 
-@csrf_exempt 
+@csrf_exempt
 @api_view(['POST'])
 def get_post(request):
 	if "token" not in request.POST or "id" not in request.POST:
@@ -86,7 +87,7 @@ def get_post(request):
 	except:
 		return Response({"status": "failed", "error": "internal server error"})
 
-@csrf_exempt 
+@csrf_exempt
 @api_view(['POST'])
 def vote(request):
 	if "token" not in request.POST or "id" not in request.POST or "type" not in request.POST or "value" not in request.POST:
@@ -126,7 +127,7 @@ def vote(request):
 	except:
 		return Response({"status": "failed", "error": "internal server error"})
 
-@csrf_exempt 
+@csrf_exempt
 @api_view(['POST'])
 def list_posts(request):
 	if "token" not in request.POST:
@@ -155,7 +156,7 @@ def list_posts(request):
 		if tags[0]:
 			# count = number of matched tags
 			posts = posts.filter(tag__in=[tag.id for tag in models.Tag.objects.filter(tag_value__in=tags)]).annotate(count=Count("post_id")).distinct()
-		
+
 		if order == "newest":
 			posts = posts.order_by("-date_posted")
 		elif order == "oldest":
@@ -165,7 +166,7 @@ def list_posts(request):
 		else:
 			posts = posts.order_by("-count", "-date_posted")
 			pass  # haven't found a way to do this yet, relevance should depend on a combination age and score as well (rn only on number of matched tags and age if equal)
-		
+
 		return Response({'status': 'success', 'posts': [{
 			'post_id': post.post_id,
 			'author_id': post.author_id,
@@ -180,3 +181,64 @@ def list_posts(request):
 		} for post in posts[begin_from:limit]]})
 	except:
 		return Response({"status": "failed", "error": "internal server error"})
+
+
+@csrf_exempt
+@api_view(['POST'])
+def list_comment(request):
+	if "access_token" not in request.POST or 'post_id' not in request.POST:
+		return Response({"status": "failed", "error": "must include token and post id"})
+
+	if not token.isValidToken(request.POST.get("access_token")):
+		return Response({"status": "failed", "error": "invalid token"})
+
+	payload = token.decode(request.POST.get("access_token"))
+	user_id = payload.get("user_id")
+
+	try:
+		post_id = int(request.POST.get('post_id'))
+		depth = int(request.POST.get('depth', 10))
+		order_type = request.POST.get('order_type', 'best')
+		limit = int(request.POST.get('limit', 20))
+	except:
+		return Response({"status": "failed", "error": "parameter error"})
+	comments = Comment.objects.filter(post_id=post_id, parent_id=None)
+	if order_type == 'best':
+		comments = comments.order_by('-score', 'comment_id')[:limit]
+	else:
+		comments = comments.order_by('-date_posted', 'comment_id')[:limit]
+
+	i = 0
+	tree = []
+	for comment in comments:
+		if comment.status == 2:
+			tree.append(
+				{'comment_id': comment.comment_id,
+				 'author_id': "[deleted]",
+				 'author_name': "[deleted]",
+				 'date_posted': "[deleted]",
+				 'score': "[deleted]",
+				 'user_vote': "[deleted]",
+				 'content': "[deleted]",
+				 'children': []}
+			)
+		else:
+			vote = models.Vote.objects.filter(user_id=user_id, vote_type=0, object_id=comment.comment_id).first()
+			if vote is None:
+				vote = 0
+			else:
+				vote = vote.vote_value
+			tree.append(
+				{'comment_id': comment.comment_id,
+				 'author_id': comment.author.user_id,
+				 'author_name': comment.author.username,
+				 'date_posted': comment.date_posted,
+				 'score': comment.score,
+				 'user_vote': vote,
+				 'content': comment.raw_content,
+				 'parent_id': comment.parent_id,
+				 'children': []}
+				)
+		add_nodes(get_children(comment, order_type), tree[i], user_id, 1, depth, order_type)
+		i += 1
+	return Response({"status": "success", 'tree': tree})

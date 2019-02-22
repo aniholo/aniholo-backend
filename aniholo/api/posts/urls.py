@@ -12,4 +12,5 @@ urlpatterns = [
     path('list', views.list_posts, name='post_list'),  # list posts for specific params
     path('get', views.get_post, name='post_get'),  # get data of a single post
     path('vote', views.vote, name='object_vote'),  # vote on an object
+    path('comments', views.list_comment, name='comments_list'),  # list all comments
 ]
